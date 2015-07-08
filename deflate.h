@@ -81,12 +81,10 @@ typedef struct tree_desc_s {
 typedef uint16_t Pos;
 typedef uint32_t IPos;
 
-#ifdef EXPERIMENTAL
 typedef union {
 	Pos pos[4];
 	uint64_t pos_s;
 } Posx4;
-#endif
 
 /* A Pos is an index in the character window. We use short instead of int to
  * save space in the various tables. IPos is used only for parameter passing.
@@ -125,18 +123,13 @@ typedef struct internal_state {
      * is directly used as sliding window.
      */
 
-#ifndef EXPERIMENTAL
-    Pos *prev;
+    void *prev;
     /* Link to older string with same hash index. To limit the size of this
      * array to 64K, this link is maintained only for the last 32K strings.
      * An index in this array is thus a window index modulo 32K.
      */
 
-    Pos *head; /* Heads of the hash chains or NIL. */
-#else
-    Posx4 *prev;
-    Posx4 *head;
-#endif
+    void *head; /* Heads of the hash chains or NIL. */
 
     uint32_t  ins_h;          /* hash index of string to be inserted */
     uint32_t  hash_size;      /* number of elements in hash table */

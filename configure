@@ -56,6 +56,7 @@ else
 fi
 
 # set defaults before processing command line options
+CFLAGS="-O3 -march=native -DEXPERIMENTAL"
 LDCONFIG=${LDCONFIG-"ldconfig"}
 LDSHAREDLIBC="${LDSHAREDLIBC--lc}"
 ARCHS=   # target specific flags
