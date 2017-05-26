@@ -365,10 +365,10 @@
 #endif
 
 #if !defined(__MACTYPES__)
-typedef uint8_t    Byte;  /* 8 bits */
+typedef unsigned char  Byte;  /* 8 bits */
 #endif
-typedef uint32_t   uInt;  /* 32 bits */
-typedef uint64_t   uLong; /* 64 bits */
+typedef unsigned int   uInt;  /* 16 bits or more */
+typedef unsigned long  uLong; /* 32 bits or more */
 
 #ifdef SMALL_MEDIUM
    /* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
