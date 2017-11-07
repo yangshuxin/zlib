@@ -44,6 +44,9 @@
  *   - prepend '$' to some immediate operands to make assembler happy.
  */
 
+
+#if !defined(__APPLE__)
+
 #define ENTRY(name) \
 .globl name; \
 .hidden name; \
@@ -52,6 +55,17 @@ name:
 
 #define ENDPROC(name) \
 .size name, .-name
+
+#else
+
+#define ENTRY(name) \
+.globl _ ## name; \
+.private_extern _ ## name; \
+_ ## name:
+
+#define ENDPROC(name)
+
+#endif
 
 .align 16
 /*
