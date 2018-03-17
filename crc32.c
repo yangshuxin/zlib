@@ -37,11 +37,16 @@ uint32_t crc32(uint32_t crc, uint8_t *buf, size_t len) {
         buf += 8;
     }
 
-    while (len) {
-        crc = __crc32b(crc, *buf);
-        len--;
-        buf++;
+    if (len & 4) {
+        crc = __crc32w(crc, *buf);
+        buf += 4;
     }
+    if (len & 2) {
+        crc = __crc32h(crc, *buf);
+        buf += 2;
+    }
+    if (len & 1)
+        crc = __crc32b(crc, *buf);
 
     return ~crc;
 }
