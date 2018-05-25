@@ -7,6 +7,19 @@
 
 #include "zlib.h"
 #include <stdio.h>
+#ifndef UINT32_MAX
+#include <stdint.h>
+#endif
+
+/*support MSVC 2013 prior to https://github.com/libgit2/libgit2/issues/3476 */
+#if defined(_MSC_VER)
+ GIT_BEGIN_DECL
+# include "inttypes.h"
+ GIT_END_DECL
+/** This check is needed for importing this file in an iOS/OS X framework throws an error in Xcode otherwise.*/
+#elif !defined(__CLANG_INTTYPES_H)
+# include <inttypes.h>
+#endif
 
 #ifdef STDC
 #  include <string.h>
@@ -362,7 +375,7 @@ void test_large_inflate(compr, comprLen, uncompr, uncomprLen)
     CHECK_ERR(err, "inflateEnd");
 
     if (d_stream.total_out != 2*uncomprLen + comprLen/2) {
-        fprintf(stderr, "bad large inflate: %ld\n", d_stream.total_out);
+        fprintf(stderr, "bad large inflate: %" PRId64 "\n", d_stream.total_out);
         exit(1);
     } else {
         printf("large_inflate(): OK\n");
@@ -558,9 +571,11 @@ int main(argc, argv)
     } else if (strcmp(zlibVersion(), ZLIB_VERSION) != 0) {
         fprintf(stderr, "warning: different zlib version\n");
     }
-
-    printf("zlib version %s = 0x%04x, compile flags = 0x%lx\n",
-             ZLIB_VERSION, ZLIB_VERNUM, zlibCompileFlags());
+    /* ensure flags is 64 bit regardless whether uLong is 32 or 64 bit
+     */
+	uint64_t flags64 = zlibCompileFlags();
+    printf("zlib version %s = 0x%" PRIx64 ", compile flags = 0x%llx\n",
+             ZLIB_VERSION, ZLIB_VERNUM, flags64);
 
     compr    = (Byte*)calloc((uInt)comprLen, 1);
     uncompr  = (Byte*)calloc((uInt)uncomprLen, 1);
