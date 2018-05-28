@@ -142,7 +142,7 @@ static uint32_t hash_func(deflate_state *s, void* str) {
     return __crc32cw(0, *(uint32_t*)str) & s->hash_mask;
 }
 
-#elif defined __x86_64__
+#elif defined __x86_64__ || defined _M_AMD64
 
 #include <immintrin.h>
 static uint32_t hash_func(deflate_state *s, void* str) {
