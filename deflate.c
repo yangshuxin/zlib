@@ -1360,7 +1360,7 @@ static void fill_window(s)
                 q+=8;
             }
 
-#elif defined __x86_64__
+#elif defined __x86_64__ || defined _M_AMD64
 
             __m128i  W;
             __m128i *q;
