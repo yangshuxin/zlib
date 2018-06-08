@@ -12,14 +12,8 @@ check_include_file(stdint.h    HAVE_STDINT_H)
 check_include_file(stddef.h    HAVE_STDDEF_H)
 check_include_file(unistd.h    HAVE_UNISTD_H)
 
-# Check to see if we have large file support
-check_type_size(off64_t OFF64_T)
-if(HAVE_OFF64_T)
-    add_definitions(-D_LARGEFILE64_SOURCE=1)
-endif()
-
-# Check for fseeko
-check_function_exists(fseeko HAVE_FSEEKO)
+# Build with large file support
+add_definitions(-D_LARGEFILE64_SOURCE=1)
 
 # Generate zcon.h
 configure_file(	${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
