@@ -15,16 +15,6 @@ check_include_file(unistd.h    HAVE_UNISTD_H)
 # Build with large file support
 add_definitions(-D_LARGEFILE64_SOURCE=1)
 
-# Generate zcon.h
-configure_file(	${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
-		${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
-
-# Generate zlib.pc
-set(ZLIB_PC ${CMAKE_CURRENT_BINARY_DIR}/zlib.pc)
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zlib.pc.cmakein
-        ${ZLIB_PC} @ONLY)
-
 # Build type setting
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING
@@ -42,6 +32,16 @@ set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include")
 set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man")
 set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig")
+
+# Generate zlib.pc
+set(ZLIB_PC ${CMAKE_CURRENT_BINARY_DIR}/zlib.pc)
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zlib.pc.cmakein
+        ${ZLIB_PC} @ONLY)
+
+# Generate zcon.h
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
+        ${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
 # Mark OSX settings as advanced
 if(APPLE)
