@@ -136,6 +136,12 @@ string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
     "\\1" ZLIB_FULL_VERSION ${_zlib_h_contents})
 
 if(BUILD_SHARED_LIBS)
+    # Visibility
+    CHECK_C_COMPILER_FLAG(-fvisibility=hidden HAVE_HIDDEN)
+    if(HAVE_HIDDEN)
+        add_definitions(-DHAVE_HIDDEN)
+    endif()
+
     # DLL resource setting
     if(NOT MINGW)
         set(ZLIB_DLL_SRCS
