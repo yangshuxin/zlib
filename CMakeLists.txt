@@ -46,6 +46,7 @@ set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig")
 # Mark OSX settings as advanced
 if(APPLE)
     mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
+    set(CMAKE_MACOSX_RPATH TRUE)
 endif()
 
 # Option to use static runtime
