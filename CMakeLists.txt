@@ -54,7 +54,7 @@ endif()
 # Compiler dependent flags
 include (CheckCCompilerFlag)
 if(UNIX)
-    CHECK_C_COMPILER_FLAG("-msse4.2" HAS_SSE42)
+    check_c_compiler_flag(-msse4.2 HAS_SSE42)
     if(HAS_SSE42)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.2")
         add_definitions(-DHAS_SSE42)
@@ -64,7 +64,7 @@ elseif(MSVC)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 
-    CHECK_C_COMPILER_FLAG("/arch:AVX" HAS_AVX)
+    check_c_compiler_flag(/arch:AVX HAS_AVX)
     if (HAS_AVX)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX")
     endif()
@@ -72,7 +72,7 @@ endif()
 
 # Assembly setting
 if(UNIX)
-    CHECK_C_COMPILER_FLAG("-mpclmul" HAS_PCLMUL)
+    check_c_compiler_flag(-mpclmul HAS_PCLMUL)
     if(HAS_PCLMUL)
         set(ENABLE_ASSEMBLY "PCLMUL" CACHE STRING "Choose assembly implementation.")
         set_property(CACHE ENABLE_ASSEMBLY PROPERTY STRINGS  "OFF;PCLMUL")
@@ -130,7 +130,7 @@ string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
 
 if(BUILD_SHARED_LIBS)
     # Visibility
-    CHECK_C_COMPILER_FLAG(-fvisibility=hidden HAVE_HIDDEN)
+    check_c_compiler_flag(-fvisibility=hidden HAVE_HIDDEN)
     if(HAVE_HIDDEN)
         add_definitions(-DHAVE_HIDDEN)
     endif()
