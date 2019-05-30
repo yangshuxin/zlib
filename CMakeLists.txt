@@ -26,6 +26,11 @@ endif()
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(BUILD_EXAMPLES "Build examples" OFF)
 
+# parse the full version number from zlib.h and include in ZLIB_VERSION
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
+string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
+    "\\1" ZLIB_VERSION ${_zlib_h_contents})
+
 # Generate zlib.pc
 set(ZLIB_PC ${CMAKE_CURRENT_BINARY_DIR}/zlib.pc)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zlib.pc.cmakein
@@ -123,11 +128,6 @@ set(ZLIB_SRCS
     zutil.c
 )
 
-# parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
-string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
-    "\\1" ZLIB_FULL_VERSION ${_zlib_h_contents})
-
 if(BUILD_SHARED_LIBS)
     # Visibility
     check_c_compiler_flag(-fvisibility=hidden HAVE_HIDDEN)
@@ -163,12 +163,12 @@ if(BUILD_SHARED_LIBS)
     if(NOT CYGWIN)
         # This property causes shared libraries on Linux to have the full version
         # encoded into their final filename.  We disable this on Cygwin because
-        # it causes cygz-${ZLIB_FULL_VERSION}.dll to be created when cygz.dll
+        # it causes cygz-${ZLIB_VERSION}.dll to be created when cygz.dll
         # seems to be the default.
         #
         # This has no effect with MSVC, on that platform the version info for
         # the DLL comes from the resource file win32/zlib1.rc
-        set_target_properties(zlib PROPERTIES VERSION ${ZLIB_FULL_VERSION})
+        set_target_properties(zlib PROPERTIES VERSION ${ZLIB_VERSION})
     endif()
 
     if(UNIX)
@@ -205,11 +205,10 @@ endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
     install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION include)
 endif()
+
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
     install(FILES zlib.3 DESTINATION share/man/man3)
-endif()
-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
-    install(FILES ${ZLIB_PC} DESTINATION share/pkgconfig)
+    install(FILES ${ZLIB_PC} DESTINATION lib/pkgconfig)
 endif()
 
 #============================================================================
