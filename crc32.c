@@ -278,7 +278,7 @@ local unsigned long crc32_generic(crc, buf, len)
  * buffer with initial CRC value <crc32>. The buffer is <len> byte in length,
  * and must be 16-byte aligned.
  */
-extern uint crc32_pclmul_le_16(unsigned char const *buffer,
+extern uInt crc32_pclmul_le_16(unsigned char const *buffer,
                                size_t len, uInt crc32);
 
 uLong crc32(crc, buf, len)
