@@ -95,7 +95,18 @@ static  void check_match(deflate_state *s, IPos start, IPos match,
 
 #define NIL 0
 /* Tail of hash chains */
+#ifndef ACTUAL_MIN_MATCH
 #define ACTUAL_MIN_MATCH 4
+#endif
+
+#if ACTUAL_MIN_MATCH == 4
+#define MIN_MATCH_MASK(x) (x)
+#elif ACTUAL_MIN_MATCH == 3
+#define MIN_MATCH_MASK(x) (x & 0xFFFFFF)
+#else
+#error Min match needs to be 3 or 4
+#endif
+
 /* Values for max_lazy_match, good_match and max_chain_length, depending on
  * the desired pack level (0..9). The values given below have been tuned to
  * exclude worst case performance for pathological files. Better values may be
@@ -139,14 +150,14 @@ static const config configuration_table[10] = {
 #include <arm_neon.h>
 #include <arm_acle.h>
 static uint32_t hash_func(deflate_state *s, void* str) {
-    return __crc32cw(0, *(uint32_t*)str) & s->hash_mask;
+    return __crc32cw(0, MIN_MATCH_MASK(*(uint32_t*)str)) & s->hash_mask;
 }
 
 #elif defined __x86_64__
 
 #include <immintrin.h>
 static uint32_t hash_func(deflate_state *s, void* str) {
-    return _mm_crc32_u32(0, *(uint32_t*)str) & s->hash_mask;
+    return _mm_crc32_u32(0, MIN_MATCH_MASK(*(uint32_t*)str)) & s->hash_mask;
 }
 
 #else
@@ -1179,8 +1190,13 @@ static uint32_t longest_match(s, cur_match)
 
     register uint8_t *strend = s->window + s->strstart + MAX_MATCH;
     /* We optimize for a minimal match of four bytes */
+#if ACTUAL_MIN_MATCH == 4
     register uint32_t scan_start = *(uint32_t*)scan;
     register uint32_t scan_end   = *(uint32_t*)(scan+best_len-3);
+#else
+    register uint16_t scan_start = *(uint32_t*)scan;
+    register uint16_t scan_end   = *(uint32_t*)(scan+best_len-1);
+#endif
 
     /* The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
      * It is easy to get rid of this optimization if necessary.
@@ -1213,7 +1229,11 @@ static uint32_t longest_match(s, cur_match)
         cont = 1;
         do {
             match = s->window + cur_match;
+#if ACTUAL_MIN_MATCH == 4
             if (likely(*(uint32_t*)(match+best_len-3) != scan_end) || (*(uint32_t*)match != scan_start)) {
+#else
+            if (likely(*(uint16_t*)(match+best_len-1) != scan_end)) {
+#endif
                 if ((cur_match = prev[cur_match & wmask]) > limit
                     && --chain_length != 0) {
                     continue;
@@ -1226,7 +1246,14 @@ static uint32_t longest_match(s, cur_match)
         if (!cont)
             break;
 
+#if ACTUAL_MIN_MATCH == 4
         scan += 4, match+=4;
+#else
+        if (*(ushf*)match != scan_start)
+            continue;
+
+        scan += 2, match+=2;
+#endif
         do {
             uint64_t sv = *(uint64_t*)(void*)scan;
             uint64_t mv = *(uint64_t*)(void*)match;
@@ -1254,7 +1281,11 @@ static uint32_t longest_match(s, cur_match)
             s->match_start = cur_match;
             best_len = len;
             if (len >= nice_match) break;
+#if ACTUAL_MIN_MATCH == 4
             scan_end = *(uint32_t*)(scan+best_len-3);
+#else
+            scan_end = *(uint16_t*)(scan+best_len-1);
+#endif
         }
     } while ((cur_match = prev[cur_match & wmask]) > limit
              && --chain_length != 0);
@@ -1575,7 +1606,7 @@ static block_state deflate_fast(s, flush)
             if (s->lookahead == 0) break; /* flush the current block */
         }
 
-        /* Insert the string window[strstart .. strstart+2] in the
+        /* Insert the string window[strstart .. strstart + ACTUAL_MIN_MATCH - 1] in the
          * dictionary, and set hash_head to the head of the hash chain:
          */
         hash_head = NIL;
@@ -1669,7 +1700,7 @@ static block_state deflate_slow(s, flush)
             if (s->lookahead == 0) break; /* flush the current block */
         }
 
-        /* Insert the string window[strstart .. strstart+3] in the
+        /* Insert the string window[strstart .. strstart + ACTUAL_MIN_MATCH - 1] in the
          * dictionary, and set hash_head to the head of the hash chain:
          */
         hash_head = NIL;
