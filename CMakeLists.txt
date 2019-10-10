@@ -26,6 +26,9 @@ endif()
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(BUILD_EXAMPLES "Build examples" OFF)
 
+# Set -fPIC option
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # parse the full version number from zlib.h and include in ZLIB_VERSION
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
 string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
