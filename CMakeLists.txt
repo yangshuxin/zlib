@@ -72,6 +72,18 @@ else()
     endif()
 endif()
 
+CHECK_C_COMPILER_FLAG(-mpclmul COMPILER_HAS_M_PCLMUL)
+if (COMPILER_HAS_M_PCLMUL)
+  message( STATUS "compiler has flag pclmul")
+  add_definitions(-DHAS_PCLMUL)
+  # set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-mpclmul")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mpclmul")
+  
+else()
+  message( STATUS "compiler does not have pclmul")
+endif()
+
+
 if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
