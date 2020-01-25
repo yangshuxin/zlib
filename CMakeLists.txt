@@ -72,13 +72,40 @@ else()
     endif()
 endif()
 
+# Macro from on zlib-ng
+# Macro to check if source compiles when cross-compiling
+# or runs when compiling natively
+include(CheckCSourceRuns)
+macro(check_c_source_compile_or_run source flag)
+	if(CMAKE_CROSSCOMPILING)
+		check_c_source_compiles("${source}" ${flag})
+	else()
+		check_c_source_runs("${source}" ${flag})
+	endif()
+endmacro()
+
 CHECK_C_COMPILER_FLAG(-mpclmul COMPILER_HAS_M_PCLMUL)
 if (COMPILER_HAS_M_PCLMUL)
-  message( STATUS "compiler has flag pclmul")
-  add_definitions(-DHAS_PCLMUL)
-  # set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-mpclmul")
+  message( STATUS "compiler supports pclmul")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mpclmul")
-  
+  # check from on zlib-ng
+  #  note zlib-ng does much more thorough test of architecture
+  check_c_source_runs(
+            "#include <immintrin.h>
+            int main(void)
+            {
+                __m128i a = _mm_setzero_si128();
+                __m128i b = _mm_setzero_si128();
+                __m128i c = _mm_clmulepi64_si128(a, b, 0x10);
+                (void)c;
+                return 0;
+            }"
+            HAVE_PCLMULQDQ_INTRIN
+        )
+    if(HAVE_PCLMULQDQ_INTRIN)
+    	add_definitions(-DHAS_PCLMUL)    
+    endif()
+  # set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-mpclmul") 
 else()
   message( STATUS "compiler does not have pclmul")
 endif()
@@ -280,3 +307,12 @@ endif()
 if(CMAKE_SIZEOF_VOID_P EQUAL 8 AND MSVC)
   set_target_properties(zlibstatic PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
 endif()
+
+#optional: show flags specified
+MESSAGE(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
+MESSAGE(STATUS "Library Type: " ${LIB_TYPE})
+MESSAGE(STATUS "Compiler flags:" ${CMAKE_C_COMPILE_FLAGS})
+MESSAGE(STATUS "Compiler c debug flags:" ${CMAKE_C_FLAGS_DEBUG})
+MESSAGE(STATUS "Compiler c release flags:" ${CMAKE_C_FLAGS_RELEASE})
+MESSAGE(STATUS "Compiler c min size flags:" ${CMAKE_C_FLAGS_MINSIZEREL})
+MESSAGE(STATUS "Compiler c flags:" ${CMAKE_C_FLAGS})
