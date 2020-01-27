@@ -20,13 +20,12 @@
 
   DYNAMIC_CRC_TABLE and MAKECRCH can be #defined to write out crc32.h.
  */
-#ifdef HAS_PCLMUL
 
-#include <emmintrin.h>
-#include <smmintrin.h>
-#include <wmmintrin.h>
-//#include <stdio.h>
-#include <cpuid.h>
+#ifdef HAS_PCLMUL
+ #include <emmintrin.h>
+ #include <smmintrin.h>
+ #include <wmmintrin.h>
+ #include <cpuid.h>
 #endif
 
 #ifdef __aarch64__
@@ -279,29 +278,6 @@ local unsigned long crc32_generic(crc, buf, len)
 
 #ifdef HAS_PCLMUL
 
-
-#ifdef HAS_GPL
- extern uLong crc32_pclmul_le_16(unsigned char const *buffer, size_t len, uInt crc32);
-#else 
-
-int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
-
-int has_pclmul(void) {
-	if (cpu_has_pclmul >= 0)
-		return cpu_has_pclmul;
-	cpu_has_pclmul = 0;	
-	int leaf = 1;
-	uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
-	/* %ecx */
-	#define crc_bit_PCLMUL	(1 << 1)
-	if (__get_cpuid(leaf, &eax, &ebx, &ecx, &edx)) {
-		//printf("leaf=%d, eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x\n", leaf, eax, ebx, ecx, edx);
-		if ((ecx & crc_bit_PCLMUL) != 0)
-			cpu_has_pclmul = 1;		
-	}
-	return cpu_has_pclmul;
-}
-
 //https://github.com/webosose/chromium68/blob/master/src/third_party/zlib/crc32_simd.c
 /* crc32_simd.c
  *
@@ -344,14 +320,14 @@ int has_pclmul(void) {
  * "Fast CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction"
  *  V. Gopal, E. Ozturk, et al., 2009, http://intel.ly/2ySEwL0
  */
-                                
+                         
 #ifdef _MSC_VER
 #define zalign(x) __declspec(align(x))
 #else
 #define zalign(x) __attribute__((aligned((x))))
 #endif
 
-uLong crc32_simd(unsigned char const *buf, size_t len, uInt crc) {
+uint crc32_simd(unsigned char const *buf, size_t len, uInt crc) {
     /*
      * Definitions of the bit-reflected domain constants k1,k2,k3, etc and
      * the CRC32+Barrett polynomials given at the end of the paper.
@@ -457,23 +433,44 @@ uLong crc32_simd(unsigned char const *buf, size_t len, uInt crc) {
 
 }
 
-#endif //Chromium code
-
 #define PCLMUL_MIN_LEN 64
 #define PCLMUL_ALIGN 16
 #define PCLMUL_ALIGN_MASK 15
+
+int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
+
+int has_pclmul(void) {
+	if (cpu_has_pclmul >= 0)
+		return cpu_has_pclmul;
+	cpu_has_pclmul = 0;	
+	int leaf = 1;
+	uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
+	/* %ecx */
+	#define crc_bit_PCLMUL	(1 << 1)
+	if (__get_cpuid(leaf, &eax, &ebx, &ecx, &edx)) {
+		//printf("leaf=%d, eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x\n", leaf, eax, ebx, ecx, edx);
+		if ((ecx & crc_bit_PCLMUL) != 0)
+			cpu_has_pclmul = 1;		
+	}
+	return cpu_has_pclmul;
+}
+
+
+/* Function stolen from linux kernel 3.14. It computes the CRC over the given
+ * buffer with initial CRC value <crc32>. The buffer is <len> byte in length,
+ * and must be 16-byte aligned.
+ */
+extern uint crc32_pclmul_le_16(unsigned char const *buffer,
+                               size_t len, uInt crc32);
 
 uLong crc32(crc, buf, len)
     uLong crc;
     const Bytef *buf;
     uInt len;
 {
-    if (len < PCLMUL_MIN_LEN + PCLMUL_ALIGN  - 1)
+    if ((len < PCLMUL_MIN_LEN + PCLMUL_ALIGN  - 1) || (!has_pclmul()))
       return crc32_generic(crc, buf, len);
-    #ifndef HAS_GPL //detect whether current CPU supports PCLMUL
-    if (!has_pclmul())
-      return crc32_generic(crc, buf, len);
-    #endif
+
     /* Handle the leading patial chunk */
     uInt misalign = PCLMUL_ALIGN_MASK & ((unsigned long)buf);
     uInt sz = (PCLMUL_ALIGN - misalign) % PCLMUL_ALIGN;
@@ -482,12 +479,11 @@ uLong crc32(crc, buf, len)
       buf += sz;
       len -= sz;
     }
+
     /* Go over 16-byte chunks */
-    #ifdef HAS_GPL
-    crc = crc32_pclmul_le_16(buf, (len & ~PCLMUL_ALIGN_MASK), crc ^ 0xffffffffUL);
-    #else
+    //crc = crc32_pclmul_le_16(buf, (len & ~PCLMUL_ALIGN_MASK), crc ^ 0xffffffffUL);
     crc = crc32_simd(buf, (len & ~PCLMUL_ALIGN_MASK), crc ^ 0xffffffffUL);
-    #endif
+    
     crc = crc ^ 0xffffffffUL;
 
     /* Handle the trailing partial chunk */
@@ -693,12 +689,12 @@ uLong ZEXPORT crc32_combine(crc1, crc2, len2)
     return crc32_combine_(crc1, crc2, len2);
 }
 
-/*uLong ZEXPORT crc32_combine64(crc1, crc2, len2)
+uLong ZEXPORT crc32_combine64(crc1, crc2, len2)
     uLong crc1;
     uLong crc2;
     z_off64_t len2;
 {
     return crc32_combine_(crc1, crc2, len2);
-}*/
+}
 
 #endif
