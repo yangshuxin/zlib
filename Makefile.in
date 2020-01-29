@@ -54,10 +54,16 @@ pkgconfigdir = ${libdir}/pkgconfig
 
 OBJZ = adler32.o crc32.o deflate.o infback.o inffast.o inflate.o inftrees.o trees.o zutil.o
 OBJG = compress.o uncompr.o gzclose.o gzlib.o gzread.o gzwrite.o
-OBJC = $(OBJZ) $(OBJG)
 
 PIC_OBJZ = adler32.lo crc32.lo deflate.lo infback.lo inffast.lo inflate.lo inftrees.lo trees.lo zutil.lo
 PIC_OBJG = compress.lo uncompr.lo gzclose.lo gzlib.lo gzread.lo gzwrite.lo
+	
+ifneq ($(findstring -DHAS_PCLMUL, $(CFLAGS)),)
+	OBJZ += crc32_simd.o
+	PIC_OBJZ += crc32_simd.lo
+endif
+
+OBJC = $(OBJZ) $(OBJG)
 PIC_OBJC = $(PIC_OBJZ) $(PIC_OBJG)
 
 # to use the asm code: make OBJA=match.o, PIC_OBJA=match.lo

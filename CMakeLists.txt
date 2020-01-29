@@ -78,22 +78,6 @@ elseif(MSVC)
     endif()
 endif()
 
-# Assembly setting
-if(UNIX)
-    check_c_compiler_flag(-mpclmul HAS_PCLMUL)
-    if(HAS_PCLMUL)
-        set(ENABLE_ASSEMBLY "PCLMUL" CACHE STRING "Choose assembly implementation.")
-        set_property(CACHE ENABLE_ASSEMBLY PROPERTY STRINGS  "OFF;PCLMUL")
-
-        if("${ENABLE_ASSEMBLY}" STREQUAL "PCLMUL")
-            set(ZLIB_ASMS contrib/amd64/crc32-pclmul_asm.S)
-            set_source_files_properties(${ZLIB_ASMS} PROPERTIES LANGUAGE C COMPILE_FLAGS -DNO_UNDERLINE)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mpclmul")
-            add_definitions(-DHAS_PCLMUL)
-        endif()
-    endif()
-endif()
-
 #============================================================================
 # zlib
 #============================================================================
@@ -130,6 +114,23 @@ set(ZLIB_SRCS
     uncompr.c
     zutil.c
 )
+
+# append "crc_simd.c" and compile with "mpclmul" if supported by compiler
+if(UNIX)
+    check_c_compiler_flag(-mpclmul HAS_PCLMUL)
+    if(HAS_PCLMUL)
+        set(ENABLE_ASSEMBLY "PCLMUL" CACHE STRING "Choose assembly implementation.")
+        set_property(CACHE ENABLE_ASSEMBLY PROPERTY STRINGS  "OFF;PCLMUL")
+
+        if("${ENABLE_ASSEMBLY}" STREQUAL "PCLMUL")
+            #set(ZLIB_ASMS contrib/amd64/crc32-pclmul_asm.S)
+            #set_source_files_properties(${ZLIB_ASMS} PROPERTIES LANGUAGE C COMPILE_FLAGS -DNO_UNDERLINE)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mpclmul")
+            list(APPEND ZLIB_SRCS crc32_simd.c)
+            add_definitions(-DHAS_PCLMUL)
+        endif()
+    endif()
+endif()
 
 if(BUILD_SHARED_LIBS)
     # Visibility
