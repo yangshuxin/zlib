@@ -280,7 +280,7 @@ local unsigned long crc32_generic(crc, buf, len)
 #define PCLMUL_ALIGN 16
 #define PCLMUL_ALIGN_MASK 15
 
-int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
+_Atomic int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
 
 int has_pclmul(void) {
 	if (cpu_has_pclmul >= 0)
@@ -310,9 +310,12 @@ uLong crc32(crc, buf, len)
     const Bytef *buf;
     uInt len;
 {
-    if ((len < PCLMUL_MIN_LEN + PCLMUL_ALIGN  - 1) || (!has_pclmul()))
+    if (len < PCLMUL_MIN_LEN + PCLMUL_ALIGN  - 1)
       return crc32_generic(crc, buf, len);
-
+	#ifndef SKIP_CPUID_CHECK
+	if (!has_pclmul())
+      return crc32_generic(crc, buf, len);
+    #endif
     /* Handle the leading patial chunk */
     uInt misalign = PCLMUL_ALIGN_MASK & ((unsigned long)buf);
     uInt sz = (PCLMUL_ALIGN - misalign) % PCLMUL_ALIGN;
