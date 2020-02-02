@@ -21,11 +21,10 @@
 /minigzip64
 /minigzipsh
 /zlib.pc
-
-/Makefile
-/configure.log
 /zconf.h
 
-/build/
-
 .DS_Store
+
+/build
+/Makefile
+/configure.log

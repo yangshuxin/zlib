@@ -743,7 +743,7 @@ EOF
 fi
 
 # Check for AMD64 hardware support.
-if [ x$TGT_ARCH = "xx86_64" -a $(uname -m) = "x86_64" -o x$TGT_ARCH = "xamd64" -a $(uname -m) = "amd64" ] ; then
+if [ x$TGT_ARCH = "xx86_64" -o x$TGT_ARCH = "xamd64" ] ; then
 
   # Check for SSE4.2 and CRC support
 cat > $test.c << EOF
@@ -762,15 +762,19 @@ EOF
     echo "CRC and SSE4.2 support is required" | tee -a configure.log
     leave 1
   fi
-
-  # Check for PCLMUL support
+#Project copied from zlib-ng:
+# Check for PCLMUL support
 cat > $test.c << EOF
 #include <immintrin.h>
-void foo(void) {
-  _mm_clmulepi64_si128(_mm_set1_epi16(1), _mm_set1_epi16(2), 0);
+#include <wmmintrin.h>
+int main(void) {
+    __m128i a = _mm_setzero_si128();
+    __m128i b = _mm_setzero_si128();
+    __m128i c = _mm_clmulepi64_si128(a, b, 0x10);
+    (void)c;
+    return 0;
 }
 EOF
-
   if try $CC -c -mpclmul $CFLAGS $test.c ; then
     CFLAGS="-DHAS_PCLMUL -mpclmul $CFLAGS"
     SFLAGS="-DHAS_PCLMUL -mpclmul $SFLAGS"
@@ -779,7 +783,7 @@ EOF
     echo "Checking for PCLMUL support ... No" | tee -a configure.log
   fi
 
-elif [ x$TGT_ARCH = "xaarch64" -a $(uname -m) = "aarch64" ] ; then
+elif [ x$TGT_ARCH = "xaarch64" ] ; then
 
   # Check for NEON and CRC support
 cat > $test.c << EOF
