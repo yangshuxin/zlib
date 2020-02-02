@@ -298,13 +298,6 @@ int has_pclmul(void) {
 	return cpu_has_pclmul;
 }
 
-/* Function stolen from linux kernel 3.14. It computes the CRC over the given
- * buffer with initial CRC value <crc32>. The buffer is <len> byte in length,
- * and must be 16-byte aligned.
- */
-extern uint crc32_pclmul_le_16(unsigned char const *buffer,
-                               size_t len, uInt crc32);
-
 uLong crc32(crc, buf, len)
     uLong crc;
     const Bytef *buf;
@@ -326,7 +319,6 @@ uLong crc32(crc, buf, len)
     }
 
     /* Go over 16-byte chunks */
-    //crc = crc32_pclmul_le_16(buf, (len & ~PCLMUL_ALIGN_MASK), crc ^ 0xffffffffUL);
     crc = crc32_sse42_simd_(buf, (len & ~PCLMUL_ALIGN_MASK), crc ^ 0xffffffffUL);
     crc = crc ^ 0xffffffffUL;
 
