@@ -280,7 +280,15 @@ local unsigned long crc32_generic(crc, buf, len)
 #define PCLMUL_ALIGN 16
 #define PCLMUL_ALIGN_MASK 15
 
-_Atomic int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
+#if defined(__GNUC__)
+	#if  __GNUC__ < 5 
+		int cpu_has_pclmul = -1; //e.g. gcc 4.8.4 https://stackoverflow.com/questions/20326604/stdatomic-h-in-gcc-4-8
+	#else
+		_Atomic int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
+	#endif
+#else
+	_Atomic int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
+#endif
 
 int has_pclmul(void) {
 	if (cpu_has_pclmul >= 0)
