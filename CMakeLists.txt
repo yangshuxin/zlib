@@ -25,6 +25,11 @@ endif()
 # Build options
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(BUILD_EXAMPLES "Build examples" OFF)
+option(SKIP_CPUID_CHECK "Assume CPU supports fast CRC" OFF)
+
+if(SKIP_CPUID_CHECK)
+ add_definitions(-DSKIP_CPUID_CHECK)
+endif()
 
 # Set -fPIC option
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
