@@ -23,7 +23,10 @@
 
 #ifdef HAS_PCLMUL
  #include "crc32_simd.h"
- #include <cpuid.h>
+ #ifndef _MSC_VER
+  #include <cpuid.h>
+ #endif
+ //#include <stdio.h>
 #endif
 
 #ifdef __aarch64__
@@ -287,7 +290,11 @@ local unsigned long crc32_generic(crc, buf, len)
 		_Atomic int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
 	#endif
 #else
-	_Atomic int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
+	#ifdef _MSC_VER
+		int cpu_has_pclmul = -1; //e.g. gcc 4.8.4 https://stackoverflow.com/questions/20326604/stdatomic-h-in-gcc-4-8
+	#else
+		_Atomic int cpu_has_pclmul = -1; //global: will be 0 or 1 after first test
+    #endif
 #endif
 
 int has_pclmul(void) {
@@ -298,10 +305,17 @@ int has_pclmul(void) {
 	uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
 	/* %ecx */
 	#define crc_bit_PCLMUL	(1 << 1)
-	if (__get_cpuid(leaf, &eax, &ebx, &ecx, &edx)) {
-		//printf("leaf=%d, eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x\n", leaf, eax, ebx, ecx, edx);
+	#ifdef _MSC_VER
+	uint32_t regs[4]; // output: eax, ebx, ecx, edx
+	__cpuid( regs, leaf );
+	if (leaf == 1) {
+		ecx = regs[2];
+	#else
+ 	if (__get_cpuid(leaf, &eax, &ebx, &ecx, &edx)) {
+	#endif
 		if ((ecx & crc_bit_PCLMUL) != 0)
 			cpu_has_pclmul = 1;		
+		//printf("leaf=%d, eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x, cpu_has_pclmul %d\n", leaf, eax, ebx, ecx, edx, cpu_has_pclmul);
 	}
 	return cpu_has_pclmul;
 }
