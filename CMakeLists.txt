@@ -25,6 +25,11 @@ endif()
 # Build options
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(BUILD_EXAMPLES "Build examples" OFF)
+option(SKIP_CPUID_CHECK "Assume CPU supports fast CRC" OFF)
+
+if(SKIP_CPUID_CHECK)
+ add_definitions(-DSKIP_CPUID_CHECK)
+endif()
 
 # Set -fPIC option
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -126,7 +131,7 @@ if(UNIX)
         set_property(CACHE ENABLE_ASSEMBLY PROPERTY STRINGS  "OFF;PCLMUL")
 
         if("${ENABLE_ASSEMBLY}" STREQUAL "PCLMUL")
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mpclmul")
+            set_source_files_properties(crc32_simd.c PROPERTIES COMPILE_FLAGS -mpclmul)
             list(APPEND ZLIB_SRCS crc32_simd.c)
             add_definitions(-DHAS_PCLMUL)
         endif()
