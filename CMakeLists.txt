@@ -66,7 +66,7 @@ endif()
 
 # Compiler dependent flags
 include (CheckCCompilerFlag)
-if(UNIX)
+if(UNIX OR MINGW)
     check_c_compiler_flag(-msse4.2 HAS_SSE42)
     if(HAS_SSE42)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.2")
@@ -124,7 +124,7 @@ set(ZLIB_SRCS
 )
 
 # append "crc_simd.c" and compile with "mpclmul" if supported by compiler
-if(UNIX)
+if(UNIX OR MINGW)
     check_c_compiler_flag(-mpclmul HAS_PCLMUL)
     if(HAS_PCLMUL)
         option(ENABLE_PCLMUL "Enable PCLMUL intrinsics." ON)
@@ -181,7 +181,7 @@ if(BUILD_SHARED_LIBS)
         set_target_properties(zlib PROPERTIES VERSION ${ZLIB_VERSION})
     endif()
 
-    if(UNIX)
+    if(UNIX OR MINGW)
         # On unix-like platforms the library is almost always called libz
         set_target_properties(zlib PROPERTIES OUTPUT_NAME z)
         if(NOT APPLE)
@@ -193,7 +193,7 @@ if(BUILD_SHARED_LIBS)
     endif()
 else()
     add_library(zlib STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
-    if(UNIX)
+    if(UNIX OR MINGW)
         set_target_properties(zlib PROPERTIES OUTPUT_NAME z)
     endif()
     #============================================================================
