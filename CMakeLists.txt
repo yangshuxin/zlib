@@ -138,6 +138,14 @@ if(UNIX)
     endif()
 endif()
 
+# support crc intrinsics for ARM CPUs
+if(UNIX)
+    check_c_compiler_flag(-march=armv8-a+crc HAS_CRC)
+    if(HAS_CRC)
+    	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+crc")
+    endif()
+endif()
+
 if(BUILD_SHARED_LIBS)
     # Visibility
     check_c_compiler_flag(-fvisibility=hidden HAVE_HIDDEN)
