@@ -138,9 +138,11 @@ endif()
 
 if(BUILD_SHARED_LIBS)
     # Visibility
-    check_c_compiler_flag(-fvisibility=hidden HAVE_HIDDEN)
-    if(HAVE_HIDDEN)
-        add_definitions(-DHAVE_HIDDEN)
+    if(UNIX AND NOT CYGWIN)
+        check_c_compiler_flag(-fvisibility=hidden HAVE_HIDDEN)
+        if(HAVE_HIDDEN)
+            add_definitions(-DHAVE_HIDDEN)
+        endif()
     endif()
 
     # DLL resource setting
