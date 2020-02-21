@@ -146,11 +146,11 @@ if(BUILD_SHARED_LIBS)
     endif()
 
     # DLL resource setting
-    if(NOT MINGW)
+    if(MSVC)
         set(ZLIB_DLL_SRCS
             win32/zlib1.rc # If present will override custom build rule below.
         )
-    else()
+    elseif(MINGW OR CYGWIN)
         # This gets us DLL resource information when compiling on MinGW.
         if(NOT CMAKE_RC_COMPILER)
             set(CMAKE_RC_COMPILER windres.exe)
