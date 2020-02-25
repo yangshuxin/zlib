@@ -766,7 +766,6 @@ EOF
 # Check for PCLMUL support
 cat > $test.c << EOF
 #include <immintrin.h>
-#include <wmmintrin.h>
 int main(void) {
     __m128i a = _mm_setzero_si128();
     __m128i b = _mm_setzero_si128();
