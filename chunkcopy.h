@@ -376,6 +376,37 @@ static inline unsigned char FAR* chunkcopy_lapped_safe(
   return chunkcopy_lapped_relaxed(out, dist, len);
 }
 
+/*
+ * The chunk-copy code above deals with writing the decoded DEFLATE data to
+ * the output with SIMD methods to increase decode speed. Reading the input
+ * to the DEFLATE decoder with a wide, SIMD method can also increase decode
+ * speed. This option is supported on little endian machines, and reads the
+ * input data in 64-bit (8 byte) chunks.
+ */
+
+#ifdef INFLATE_CHUNK_READ_64LE
+/*
+ * Buffer the input in a uint64_t (8 bytes) in the wide input reading case.
+ */
+typedef uint64_t inflate_holder_t;
+
+/*
+ * Ask the compiler to perform a wide, unaligned load of a uint64_t using a
+ * machine instruction appropriate for the uint64_t type.
+ */
+static inline inflate_holder_t read64le(const unsigned char FAR *in) {
+    inflate_holder_t input;
+    Z_BUILTIN_MEMCPY(&input, in, sizeof(input));
+    return input;
+}
+#else
+/*
+ * Otherwise, buffer the input bits using zlib's default input buffer type.
+ */
+typedef unsigned long inflate_holder_t;
+
+#endif /* INFLATE_CHUNK_READ_64LE */
+
 #undef Z_STATIC_ASSERT
 #undef Z_RESTRICT
 #undef Z_BUILTIN_MEMCPY
