@@ -67,6 +67,23 @@ endif()
 # Compiler dependent flags
 include (CheckCCompilerFlag)
 if(UNIX OR MINGW)
+    check_c_compiler_flag(-march=armv8-a+crc ARM_CRC)
+    if(ARM_CRC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+crc")
+    endif()
+
+    check_c_compiler_flag(-msse2 HAS_SSE2)
+    if(HAS_SSE2)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+        add_definitions(-DHAS_SSE2)
+    endif()
+
+    check_c_compiler_flag(-mssse3 HAS_SSSE3)
+    if(HAS_SSSE3)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mssse3")
+        add_definitions(-DHAS_SSSE3)
+    endif()
+
     check_c_compiler_flag(-msse4.2 HAS_SSE42)
     if(HAS_SSE42)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.2")
@@ -123,24 +140,39 @@ set(ZLIB_SRCS
     zutil.c
 )
 
-# append "crc_simd.c" and compile with "mpclmul" if supported by compiler
 if(UNIX OR MINGW)
+    # append "inffast_chunk.c" and "adler32_simd.c" for ARMv8 CPU
+    if(ARM_CRC)
+        list(APPEND ZLIB_SRCS inffast_chunk.c adler32_simd.c)
+        add_definitions(-DINFLATE_CHUNK_SIMD_NEON)
+        add_definitions(-DINFLATE_CHUNK_READ_64LE)
+        add_definitions(-DADLER32_SIMD_NEON)
+    endif()
+
+    # append "inffast_chunk.c" and compile with "sse2" if supported by compiler
+    if(HAS_SSE2)
+        list(APPEND ZLIB_SRCS inffast_chunk.c)
+        set_source_files_properties(inffast_chunk.c PROPERTIES COMPILE_FLAGS -msse2)
+        add_definitions(-DINFLATE_CHUNK_SIMD_SSE2)
+        add_definitions(-DINFLATE_CHUNK_READ_64LE)
+    endif()
+
+    # append "adler32_simd.c" and compile with "ssse3" if supported by compiler
+    if(HAS_SSSE3)
+        list(APPEND ZLIB_SRCS adler32_simd.c)
+        set_source_files_properties(adler32_simd.c PROPERTIES COMPILE_FLAGS -mssse3)
+        add_definitions(-DADLER32_SIMD_SSSE3)
+    endif()
+
+    # append "crc_simd.c" and compile with "pclmul" if supported by compiler
     check_c_compiler_flag(-mpclmul HAS_PCLMUL)
     if(HAS_PCLMUL)
         option(ENABLE_PCLMUL "Enable PCLMUL intrinsics." ON)
         if(ENABLE_PCLMUL)
-            set_source_files_properties(crc32_simd.c PROPERTIES COMPILE_FLAGS -mpclmul)
             list(APPEND ZLIB_SRCS crc32_simd.c)
+            set_source_files_properties(crc32_simd.c PROPERTIES COMPILE_FLAGS -mpclmul)
             add_definitions(-DHAS_PCLMUL)
         endif()
-    endif()
-endif()
-
-# support crc intrinsics for ARM CPUs
-if(UNIX)
-    check_c_compiler_flag(-march=armv8-a+crc HAS_CRC)
-    if(HAS_CRC)
-    	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+crc")
     endif()
 endif()
 
