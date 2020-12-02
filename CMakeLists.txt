@@ -99,9 +99,6 @@ elseif(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4018")   # '<': signed/unsigned mismatch
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4101")   # unreferenced local variable
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244")   # 'initializing': conversion from 'double' to 'int', possible loss of data
 
     check_c_compiler_flag(/arch:AVX HAS_AVX)
     if (HAS_AVX)
